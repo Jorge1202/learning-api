@@ -1,0 +1,128 @@
+// Schema de Prisma — learning-ia-api
+// Documento Maestro v6.0, sección 4.5 / 5
+//
+// Convenciones:
+//   - JSONB para progress_data y master_graphs.jsonData (flexibilidad sin migraciones)
+//   - Separación estricta entre MasterGraph (compartido) y UserCourse (instancia)
+//   - validation_attempts existe DESDE EL SPRINT 0 (decisión crítica)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  user
+  admin
+}
+
+enum MasterGraphStatus {
+  draft
+  published
+}
+
+enum ValidationResult {
+  pass
+  fail
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(user)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profile     UserProfile?
+  courses     UserCourse[]
+  attempts    ValidationAttempt[]
+  sessionsLog SessionLog[]
+  feedbacks   Feedback[]
+}
+
+model UserProfile {
+  userId               String   @id
+  profesion            String?
+  objetivo             String?
+  tiempoDisponible     String?
+  tonoTutor            String?
+  contextoIndustria    String?
+  onboardingCompletado Boolean  @default(false)
+  modoActivo           String?  // "explorador" | "aspiracional"
+  metaActual           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MasterGraph {
+  id                 String            @id @default(cuid())
+  tecnologia         String
+  version            String
+  status             MasterGraphStatus @default(draft)
+  jsonData           Json              // JSONB — el grafo completo
+  creadoPor          String
+  publicadoEn        DateTime?
+  historialVersiones Json?             // JSONB — historial de cambios
+
+  courses UserCourse[]
+}
+
+model UserCourse {
+  id              String   @id @default(cuid())
+  userId          String
+  masterGraphId   String
+  progressData    Json     // JSONB — Grafo del Usuario clonado y evolucionando
+  iniciadoEn      DateTime @default(now())
+  ultimaSesionEn  DateTime @default(now())
+  rachaActual     Int      @default(0)
+  puntosTotal     Int      @default(0)
+  diagnosticoNivel String? // "principiante" | "intermedio" | "avanzado" | "experto"
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  masterGraph MasterGraph @relation(fields: [masterGraphId], references: [id])
+  attempts    ValidationAttempt[]
+  sessionsLog SessionLog[]
+}
+
+model ValidationAttempt {
+  id              String           @id @default(cuid())
+  userId          String
+  courseId        String
+  nodoId          String
+  ejercicioId     String
+  resultado       ValidationResult
+  tiempoSegundos  Int
+  creadoEn        DateTime         @default(now())
+
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course UserCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model SessionLog {
+  id                String   @id @default(cuid())
+  userId            String
+  courseId          String
+  duracionSegundos  Int
+  nodosVisitados    Json     // JSONB
+  erroresSesion     Json     // JSONB
+  creadoEn          DateTime @default(now())
+
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course UserCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String
+  tipo      String
+  contenido String
+  pantalla  String
+  creadoEn  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

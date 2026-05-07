@@ -1,0 +1,7 @@
+# Lógica de negocio pura (sin Express, sin Prisma directo si es posible).
+# Servicios candidatos:
+#   onboarding.service.ts        — Reto de Validación, Calibración del Punto de Partida
+#   graph.service.ts             — Reglas del grafo, prerequisitos, no-bloqueo
+#   versioning.service.ts        — Comparación Grafo Maestro vs instancia de usuario
+#   session.service.ts           — Calentamiento, repetición espaciada, memoria
+#   evaluation.service.ts        — Análisis de intención, mapa de calor, niveles de dominio

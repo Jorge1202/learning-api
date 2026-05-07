@@ -1,0 +1,8 @@
+# Endpoints REST organizados por dominio.
+# Ejemplos esperados:
+#   auth.routes.ts
+#   onboarding.routes.ts
+#   graph.routes.ts
+#   lessons.routes.ts
+#   workspace.routes.ts
+#   admin.routes.ts (v2)
